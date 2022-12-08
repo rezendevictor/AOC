@@ -1,6 +1,9 @@
 module projeto;
     reg [7:0] digito_a_ser_dividido;
     reg clk,pc;
+    reg [7:0] comando;  
+    wire opcode, le_mem, escreve_mem, jump, beq, pulo, mem_reg, hl, origem, opAlu, regEscreve, clock, Reset;
+    wire [2:0] decideRegSalto;
 
 
 // -------------------- BLOCO INCIAL 
@@ -9,16 +12,74 @@ module projeto;
         clk = 0;
     end
 
-    always #20 clk = ~clk; // CLOCK COM PERIODO 20
+    //always #20 clk = ~clk; // CLOCK COM PERIODO 20
     
     initial begin 
         $monitor("Time=%0d, clk = %0d, digito_a_ser_dividido=%d ,",$time, clk, digito_a_ser_dividido);
     end
+    // opcode = []
+
+    controle unidadecontrole(comando[7:4], le_mem, escreve_mem, jump, beq, pulo, mem_reg, hl, origem, opAlu, regEscreve, decideRegSalto, clock, Reset);
+
+
 // -------------------- BLOCO INCIAL FIM 
+
+endmodule
+
+module anda_memoria(endereco_atual, saida_mux_pulo, jump, beq, saida_ula ,endereco_final);
+    input [7:0] endereco_atual, saida_mux_pulo;
+    wire [7:0] novo_endereco, novo_endereco_mais_mux;
+    output [7:0] endereco_final; 
+    somador ULA(endereco_atual, 8b'00000001,0, novo_endereco);
+    somador2 ULA(novo_endereco, saida_mux_pulo ,0, novo_endereco_mais_mux);
+
+    wire saida1and, saida2and;
+
+    and1 AND(beq, saida_ula, saida1and); // CONFIRMAR SE È UM AND MESMO
+    and2 AND(jump,saida1and, saida2and);
+
+    muxFinal mux2Entradas(saida2and, novo_endereco, novo_endereco_mais_mux, endereco_final);
+
+endmodule
+
+
+module post_registrador(dado1, dado2, dois_a_zero_instrucao, endereco, origem, pulo, mem_reg, saida_mux_pulo, saida_ula )
+    input origem, pulo , mem_reg;
+    input [7:0] endereco, dado1, dado2;
+    input [2:0] dois_a_zero_instrucao;
+
+    wire [7:0] sinal_extendido, resposta_mux_origem ;
+
+    output [7:0] saida_mux_pulo, saida_ula; 
+
+
+    extensor extensorSinal(dois_a_zero_instrucao, sinal_extendido);
+
+    muxOrigem mux2Entradas(origem, dado2, sinal_extendido, resposta_mux_origem);
+    
+    muxPulo mux2Entradas(pulo, endereco, dado1, saida_mux_pulo);
+
+    somador ULA(resposta_mux_origem, dado1 , 0 , saida_ula);
+
+    /// LOGICA DA MEMORIA DE DADOS 
+
+    wire [7:0] resposta_mem_dados;
+
+    
+    muxMemReg mux2Entradas(mem_reg, saida_ula, resposta_mem_dados, saida_mux_pulo);   
+
+
+
+
+
 
 
 endmodule
 
+
+module memoria_dado_executando(sinal_comando, sinal_comando,);
+
+endmodule
 
 module ULA(number1,number2,operation,result);
     input [7:0] number1,number2;
@@ -44,7 +105,7 @@ module unidadecontrole(opcode, le_mem, escreve_mem, jump, beq, pulo, mem_reg, hl
     input [3:0] opcode;
     input clock;
     output reg le_mem, escreve_mem, jump, beq, pulo, mem_reg, hl, origem, opAlu, regEscreve, Reset;
-    output reg[1:0] decideRegSalto;
+    output reg [1:0] decideRegSalto;
 
     always @ (posedge clock) begin
         casez(opcode)
@@ -192,7 +253,7 @@ if (reset)
 	end
 assign instrucao_saida = memoria_instrucoes[counter];
 endmodule
-
+*/
 module banco_registradores
 (clock,reg_endSalto, endereco_regd, endereco_reg1, endereco_reg2, data_in, valor_regd, valor_reg1, valor_reg2, valor_endSalto, regWrite);
     input clock, regWrite;
@@ -221,7 +282,7 @@ module banco_registradores
     assign valor_endSalto = registradores[reg_endSalto];
 endmodule
 
-
+/*
 module memoria_dado(data_in, endMem, clock, leMem, escreveMem,data_out);
  
      input[7:0] endMem;
@@ -235,7 +296,7 @@ module memoria_dado(data_in, endMem, clock, leMem, escreveMem,data_out);
 
     always @(posedge clock) begin
         if (leMem)
-            assign data_out<= memory[endMen] ;
+            assign data_out <= memory[endMen] ;
     end
 
     always @(negedge clock) begin
