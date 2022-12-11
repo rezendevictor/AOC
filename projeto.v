@@ -19,35 +19,39 @@ module projeto;
         $monitor("Time=%0d, clk = %0d, digito_a_ser_dividido=%d ,",$time, clk, digito_a_ser_dividido);
     end
 
+    /*
+    unidadecontrole controle (comando[7:4], le_mem, escreve_mem, jump, beq, pulo, mem_reg, hl, origem, opAlu, regEscreve, decideRegSalto, clock, Reset);
 
-    controle unidadecontrole(comando[7:4], le_mem, escreve_mem, jump, beq, pulo, mem_reg, hl, origem, opAlu, regEscreve, decideRegSalto, clock, Reset);
+    pre_registrador pre_reg (instrucao, dado_escrito, sinalControleIndef, dado1 , dado2, endereco);
 
-    pre_reg pre_registrador(instrucao, dado_escrito, sinalControleIndef, dado1 , dado2, endereco);
-
-    post_reg post_registrador(dado1, dado2, dois_a_zero_instrucao, endereco, origem, pulo, Opalu, mem_reg, saida_mux_pulo, saida_ula);
+    post_registrador post_reg (dado1, dado2, dois_a_zero_instrucao, endereco, origem, pulo, Opalu, mem_reg, saida_mux_pulo, saida_ula);
     
-    andando_mem anda_memoria(endereco_atual, saida_mux_pulo, jump, beq, saida_ula, endereco_final);
-
+    anda_memoria andando_mem (endereco_atual, saida_mux_pulo, jump, beq, saida_ula, endereco_final);
+    */
 
 
 
 // -------------------- BLOCO INCIAL FIM 
 
 endmodule
-
+/*
 module anda_memoria(endereco_atual, saida_mux_pulo, jump, beq, saida_ula ,endereco_final);
+    input jump, beq;
     input [7:0] endereco_atual, saida_mux_pulo;
     wire [7:0] novo_endereco, novo_endereco_mais_mux;
-    output [7:0] endereco_final; 
-    somador ULA(endereco_atual, 8b'00000001,0, novo_endereco);
-    somador2 ULA(novo_endereco, saida_mux_pulo ,0, novo_endereco_mais_mux);
+    output [7:0] endereco_final, saida_ula; 
+    reg [7:0] add_1_Step = 8'b00000001;
+    wire soma = 1'b0;
+
+     ULA somador(endereco_atual,add_1_Step , soma, novo_endereco);
+     ULA soma_novo_endereco(novo_endereco, saida_mux_pulo ,soma, novo_endereco_mais_mux);
 
     wire saida1and, saida2and;
 
-    and1 AND(beq, saida_ula, saida1and); // CONFIRMAR SE È UM AND MESMO
-    and2 AND(jump,saida1and, saida2and);
+     AND primeiro_and(beq, saida_ula, saida1and); // CONFIRMAR SE È UM AND MESMO
+     AND segundo_and(jump, saida1and, saida2and);
 
-    muxFinal mux2Entradas(saida2and, novo_endereco, novo_endereco_mais_mux, endereco_final);
+     mux2Entradas muxFinal(saida2and, novo_endereco, novo_endereco_mais_mux, endereco_final);
 
 endmodule
 
@@ -60,7 +64,7 @@ module pre_registrador(instrucao, dado_escrito, sinalControleIndef, dado1 , dado
 
     
 
-    muxSinalControle mux3Entradas(sinalControleIndef, 3'b011, 3'b010, 3'b001, saida_mux_sinalControle);
+     mux3Entradas muxSinalControle(sinalControleIndef, 3'b011, 3'b010, 3'b001, saida_mux_sinalControle);
 
 
     //banco_reg banco_registradores(clock,)
@@ -75,10 +79,10 @@ module pre_registrador(instrucao, dado_escrito, sinalControleIndef, dado1 , dado
     101 registrador livre $a0
     110 registrador livre $a1
     111 registrador livre $a2
-    */
+    
 
 endmodule
-
+*/
 module banco_registradores
 (clock,reg_endSalto, endereco_regd, endereco_reg1, endereco_reg2, dado_escrito, valor_regd, valor_reg1, valor_reg2, valor_endSalto, regWrite);
     input clock, regWrite;
@@ -110,9 +114,9 @@ module banco_registradores
     assign valor_endSalto = registradores[reg_endSalto];
 
 endmodule
-
-module post_registrador(dado1, dado2, dois_a_zero_instrucao, endereco, origem, pulo, Opalu, mem_reg, saida_mux_pulo, saida_ula )
-    input origem, pulo , mem_reg, Opalu;
+/*
+module post_registrador(dado1, dado2, dois_a_zero_instrucao, endereco, origem, pulo, Opalu, mem_reg, saida_mux_pulo, saida_ula );
+    input wire origem, pulo , mem_reg, Opalu;
     input [7:0] endereco, dado1, dado2;
     input [2:0] dois_a_zero_instrucao;
 
@@ -121,30 +125,23 @@ module post_registrador(dado1, dado2, dois_a_zero_instrucao, endereco, origem, p
     output [7:0] saida_mux_pulo, saida_ula; 
 
 
-    extensor extensorSinal(dois_a_zero_instrucao, sinal_extendido);
+    extensorSinal extensor(dois_a_zero_instrucao, sinal_extendido);
 
-    muxOrigem mux2Entradas(origem, dado2, sinal_extendido, resposta_mux_origem);
+    mux2Entradas muxOrigem(origem, dado2, sinal_extendido, resposta_mux_origem);
     
-    muxPulo mux2Entradas(pulo, endereco, dado1, saida_mux_pulo);
+    mux2Entradas muxPulo(pulo, endereco, dado1, saida_mux_pulo);
 
-    somador ULA(resposta_mux_origem, dado1 , Opalu , saida_ula);
+    ULA somador(resposta_mux_origem, dado1 , Opalu , saida_ula);
 
     /// LOGICA DA MEMORIA DE DADOS 
 
     wire [7:0] resposta_mem_dados;
 
     
-    muxMemReg mux2Entradas(mem_reg, saida_ula, resposta_mem_dados, saida_mux_pulo);   
-
-
-
+    mux2Entradas muxMemReg(mem_reg, saida_ula, resposta_mem_dados, saida_mux_pulo);   
 
 endmodule
-
-
-module memoria_dado_executando(sinal_comando, sinal_comando,);
-
-endmodule
+*/
 
 module ULA(number1,number2,operation,result);
     input [7:0] number1,number2;
@@ -268,7 +265,7 @@ endmodule
 
  
  module AND( entrada1, entrada2, saida);
-    input entrada1,entrada2;
+    input  entrada1,entrada2;
     output saida;
     assign saida = entrada1 && entrada2;
  endmodule
@@ -288,7 +285,7 @@ module pc_counter (clock, endereco);
     assign endereco = counter;
 endmodule
 
-/*
+
 module memoria_instrucoes(counter, clock, instrucao_saida, reset);
 input clock, reset; // 
 input [7:0] counter; //vem do módulo pc
@@ -299,46 +296,45 @@ always @(posedge clock)
 begin
 if (reset)
 		case(counter)
-			8'b00000000: memoria_instrucoes[counter] = 8'b10011000;1
-			8'b00000001: memoria_instrucoes[counter] = 8'b11101000;2
-			8'b00000010: memoria_instrucoes[counter] = 8'b10011001;3 
-			8'b00000011: memoria_instrucoes[counter] = 8'b11001000;4 
-			8'b00000100: memoria_instrucoes[counter] = 8'b10011001;5 
-			8'b00000101: memoria_instrucoes[counter] = 8'b11111000;6 
-			8'b00000110: memoria_instrucoes[counter] = 8'b10110001;7 
-			8'b00000111: memoria_instrucoes[counter] = 8'b00101000;8 
-			8'b00001000: memoria_instrucoes[counter] = 8'b00101110;9
-			8'b00001001: memoria_instrucoes[counter] = 8'b10101110;10 
-			8'b00001010: memoria_instrucoes[counter] = 8'b11111010;11 
-			8'b00001011: memoria_instrucoes[counter] = 8'b11000011;12
-			default: memoria_instrucoes[counter] = 8'b11000011; halt
-			endcase
+			8'b00000000: memoria_instrucoes[counter] <= 8'b10011000;
+			8'b00000001: memoria_instrucoes[counter] <= 8'b11101000;
+			8'b00000010: memoria_instrucoes[counter] <= 8'b10011001; 
+			8'b00000011: memoria_instrucoes[counter] <= 8'b11001000; 
+			8'b00000100: memoria_instrucoes[counter] <= 8'b10011001; 
+			8'b00000101: memoria_instrucoes[counter] <= 8'b11111000; 
+			8'b00000110: memoria_instrucoes[counter] <= 8'b10110001; 
+			8'b00000111: memoria_instrucoes[counter] <= 8'b00101000; 
+			8'b00001000: memoria_instrucoes[counter] <= 8'b00101110;
+			8'b00001001: memoria_instrucoes[counter] <= 8'b10101110; 
+			8'b00001010: memoria_instrucoes[counter] <= 8'b11111010; 
+			8'b00001011: memoria_instrucoes[counter] <= 8'b11000011;
+			default: memoria_instrucoes[counter] <= 8'b11000011; 
+        endcase
 	end
 assign instrucao_saida = memoria_instrucoes[counter];
 endmodule
-*/
 
-/*
-module memoria_dado(data_in, endMem, clock, leMem, escreveMem,data_out);
- 
-     input[7:0] endMem;
+
+
+
+
+module memoria_dado(data_in,reset, endMem, clock, leMem, escreveMem,data_out);
+     input [7:0] endMem;
      input [7:0] data_in;
-     input leMem, escreveMem;
+     input leMem, escreveMem, reset;
      input clock;
-     output [7:0] data_out;
-     reg	[7:0] memory [50:0];
-
-	assign dataOut = memory[endMem];
+     output reg [7:0] data_out;
+     reg [7:0] memory [50:0];
 
     always @(posedge clock) begin
-        if (leMem)
-            assign data_out <= memory[endMen] ;
+        if (leMem && reset)
+            data_out <= memory[endMem] ;
+        if (escreveMem && reset)
+			memory[endMem] <= data_in;
     end
 
-    always @(negedge clock) begin
-        if (escreveMem)
-			memory[endMen]<= data_in;
+    always @(clock) begin
+     
 	end
     
 endmodule
-*/
